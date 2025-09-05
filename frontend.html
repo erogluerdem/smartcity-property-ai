@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Akıllı Şehir Taşınmaz Yönetimi</title>
+  <style>
+    /* Üst menü */
+    .topnav {
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+  .topnav .logo { display:flex; align-items:center; gap:12px; font-weight:700; color:#2d3a4b; margin-left:8px; }
+  .topnav .logo img { height:36px; border-radius:6px; }
+  /* Masaüstünde menüyü ortala */
+  .topnav nav { display:flex; gap:12px; align-items:center; position:absolute; left:50%; transform:translateX(-50%); }
+    .topnav nav a { color:#2d3a4b; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:600; }
+    .topnav nav a:hover, .topnav nav a.active { background: linear-gradient(90deg,#6dd5ed,#2193b0); color:#fff; }
+    .nav-toggle { display:none; background:transparent;border:none;font-size:20px;cursor:pointer; }
+    @media (max-width:900px) {
+      .topnav nav { display:none; flex-direction:column; position:fixed; right:18px; top:64px; background:rgba(255,255,255,0.97); padding:12px; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.12); transform:none; left:auto; }
+      .topnav nav.open { display:flex; }
+      .nav-toggle { display:block; }
+    }
+
+    /* Menü sonrası kalan stiller (varolanlarla uyumlu) */
+    body {
+      background: linear-gradient(120deg, #232526 0%, #414345 100%);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
+      min-height: 100vh;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #2d3a4b;
+      margin-top: 32px;
+    }
+    #tasinmazlar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+    .tasinmaz {
+      background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(44,62,80,0.12);
+      border: none;
+      padding: 32px 24px 24px 24px;
+      min-width: 240px;
+      max-width: 280px;
+      transition: transform 0.3s, box-shadow 0.3s;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      overflow: hidden;
+      animation: fadeInCard 0.7s;
+    }
+    @keyframes fadeInCard {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .tasinmaz:hover {
+      transform: translateY(-8px) scale(1.04);
+      box-shadow: 0 16px 40px rgba(44,62,80,0.18);
+    }
+    .tasinmaz .icon {
+      font-size: 38px;
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      color: #6dd5ed;
+      filter: drop-shadow(0 2px 6px #2193b0);
+    }
+    .tasinmaz .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 8px rgba(44,62,80,0.12);
+      border: 2px solid #6dd5ed;
+    }
+    #chat {
+      margin: 48px auto 0 auto;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(44,62,80,0.08);
+      padding: 24px;
+    }
+    #chatInput {
+      width: 70%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #b2bec3;
+      font-size: 16px;
+      margin-right: 8px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    #chatInput:focus {
+      border: 1.5px solid #6dd5ed;
+    }
+    button {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(90deg, #6dd5ed 0%, #2193b0 100%);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    body.dark {
+      background: linear-gradient(120deg, #232526 0%, #414345 100%);
+      color: #f1f1f1;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%);
+    }
+    #chatlog {
+      background: #f9f9f9;
+      padding: 10px;
+      min-height: 80px;
+      border-radius: 8px;
+      margin-top: 16px;
+      font-size: 15px;
+    }
+    .msg {
+      display: flex;
+      align-items: flex-end;
+      margin: 12px 0;
+      animation: fadeIn 0.5s;
+      max-width: 90%;
+    }
+    .msg .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 8px;
+      box-shadow: 0 2px 8px rgba(44,62,80,0.12);
+      border: 2px solid #6dd5ed;
+    }
+    .msg .balon {
+      padding: 10px 18px;
+      border-radius: 18px;
+      background: linear-gradient(90deg, #6dd5ed 0%, #2193b0 100%);
+      color: #fff;
+      font-size: 15px;
+      box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+      margin-left: 0;
+      margin-right: 0;
+      min-width: 60px;
+      max-width: 100%;
+      word-break: break-word;
+    }
+    .msg.user {
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+    }
+    .msg.user .balon {
+      background: linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%);
+      color: #fff;
+    }
+    .msg.bot {
+      justify-content: flex-start;
+    }
+    .msg.bot .balon {
+      background: linear-gradient(90deg, #e0eafc 0%, #cfdef3 100%);
+      color: #2d3a4b;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 600px) {
+      #tasinmazlar { flex-direction: column; align-items: center; }
+      .tasinmaz { min-width: 90vw; max-width: 95vw; }
+      #chat { max-width: 98vw; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topnav">
+    <div class="logo"><img src="https://api.dicebear.com/7.x/identicon/png?seed=akilli-sehir" alt="logo"><span>AkıllıŞehir Yönetimi</span></div>
+    <nav id="mainNav">
+      <a href="#tasinmazlar">Liste</a>
+      <a href="#ekle">Ekle</a>
+      <a href="#harita">Harita</a>
+      <a href="#istatistik">İstatistikler</a>
+      <a href="#tools">Araçlar</a>
+      <a href="#surdurulebilirlik">Sürdürülebilirlik</a>
+      <a href="#chat">Chatbot</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle">☰</button>
+  </header>
+  <main style="padding:12px 20px;">
+  <div style="max-width:900px;margin:12px auto;display:flex;justify-content:flex-end;gap:8px;align-items:center;">
+    <div id="authUI" style="display:flex;gap:8px;align-items:center;"></div>
+  </div>
+  <section id="tasinmazlar-section">
+  <h1 id="tasinmazlar">Taşınmaz Listesi</h1>
+  <div style="max-width:900px;margin:12px auto 0 auto;display:flex;gap:12px;align-items:center;justify-content:center;">
+    <input id="searchQ" placeholder="Ara: isim veya konum" style="flex:1;padding:10px;border-radius:8px;border:1px solid #b2bec3;">
+    <select id="filterTur" style="padding:10px;border-radius:8px;border:1px solid #b2bec3;">
+      <option value="">Tümü</option>
+      <option value="Konut">Konut</option>
+      <option value="Arsa">Arsa</option>
+      <option value="Ticari">Ticari</option>
+    </select>
+    <input id="minVal" type="number" placeholder="Min TL" style="width:120px;padding:10px;border-radius:8px;border:1px solid #b2bec3;">
+    <input id="maxVal" type="number" placeholder="Max TL" style="width:120px;padding:10px;border-radius:8px;border:1px solid #b2bec3;">
+    <button id="applyFilter">Filtrele</button>
+  </div>
+  <div id="tasinmazlar"></div>
+  </section>
+
+  <button id="darkToggle" title="Karanlık modu aç/kapat" aria-label="Karanlık modu" style="position:fixed;top:18px;right:18px;z-index:999;padding:10px;border-radius:8px;border:none;background:linear-gradient(90deg,#232526 0%,#414345 100%);color:#fff;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(44,62,80,0.12);">🌙</button>
+
+  <section id="ekle">
+  <h2>Yeni Taşınmaz Ekle</h2>
+  <form id="ekleForm" style="max-width:420px;margin:32px auto 0 auto;background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(44,62,80,0.08);display:flex;flex-direction:column;gap:12px;">
+    <input type="text" id="ad" placeholder="Ad" required style="padding:10px;border-radius:8px;border:1px solid #b2bec3;font-size:16px;">
+    <input type="text" id="konum" placeholder="Konum (örn: 39.92,32.85)" required style="padding:10px;border-radius:8px;border:1px solid #b2bec3;font-size:16px;">
+    <select id="tur" required style="padding:10px;border-radius:8px;border:1px solid #b2bec3;font-size:16px;">
+      <option value="Konut">Konut</option>
+      <option value="Arsa">Arsa</option>
+      <option value="Ticari">Ticari</option>
+    </select>
+    <input type="number" id="deger" placeholder="Değer (TL)" required min="0" style="padding:10px;border-radius:8px;border:1px solid #b2bec3;font-size:16px;">
+    <div style="display:flex;gap:8px;">
+      <input type="number" id="enerjiTuketim" placeholder="Enerji Tüketim (örn: 750)" min="0" style="flex:1;padding:10px;border-radius:8px;border:1px solid #b2bec3;font-size:16px;">
+      <select id="enerjiBirim" style="width:140px;padding:10px;border-radius:8px;border:1px solid #b2bec3;font-size:16px;">
+        <option value="kWh/ay">kWh/ay</option>
+        <option value="kWh/yıl">kWh/yıl</option>
+      </select>
+    </div>
+    <button type="submit">Ekle</button>
+    <div id="ekleSonuc" style="margin-top:8px;font-size:15px;"></div>
+  </form>
+  </section>
+
+  <section id="harita">
+  <h2>Harita</h2>
+  <div id="map" style="height:350px;max-width:700px;margin:32px auto 0 auto;border-radius:24px;box-shadow:0 8px 32px rgba(44,62,80,0.18);border:4px solid #6dd5ed;animation:fadeInBox 0.7s;"></div>
+  </section>
+
+  <section id="istatistik">
+  <h2>Fiyat İstatistikleri</h2>
+  <div style="max-width:700px;margin:32px auto 0 auto;background:#fff;padding:24px;border-radius:24px;box-shadow:0 8px 32px rgba(44,62,80,0.18);border:4px solid #2193b0;animation:fadeInBox 0.7s;">
+  <style>
+    @keyframes fadeInBox {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+    <canvas id="fiyatChart" height="120"></canvas>
+    <div id="istatistikler" style="margin-top:16px;font-size:16px;"></div>
+  </div>
+  </section>
+
+  <h2>Araçlar & Raporlar</h2>
+  <div style="max-width:700px;margin:16px auto 40px auto;background:#fff;padding:18px;border-radius:16px;box-shadow:0 8px 32px rgba(44,62,80,0.12);display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <button id="enerjiRaporBtn">Enerji Raporu (Formdan)</button>
+    <button id="tahminBtn">Hızlı Tahmin (Formdan)</button>
+    <button id="fiyatOneriBtn">Dinamik Fiyat Önerisi</button>
+    <button id="yasalBtn">Yasal Bilgi</button>
+    <button id="csvBtn">CSV İndir</button>
+    <div id="toolSonuc" style="width:100%;margin-top:12px;font-size:15px;color:#2d3a4b;"></div>
+  </div>
+
+  <h2>Sürdürülebilirlik & Senaryo</h2>
+  <div style="max-width:700px;margin:8px auto 40px auto;background:#fff;padding:18px;border-radius:16px;box-shadow:0 8px 32px rgba(44,62,80,0.12);display:flex;gap:16px;align-items:center;">
+    <canvas id="surdurulebilirChart" width="200" height="120"></canvas>
+    <div style="flex:1;">
+      <label style="font-weight:600;">Altyapı / Gelişme Bonusu (%): <span id="scenarioValue">0</span>%</label>
+      <input id="scenarioSlider" type="range" min="0" max="30" value="0" style="width:100%;margin-top:8px;">
+      <div id="scenarioResult" style="margin-top:12px;font-size:16px;color:#2d3a4b;"></div>
+      <div style="margin-top:6px;color:#666;font-size:13px;">Senaryo kaydırıcısı ile altyapı ya da proje etkisini simüle edin. Tahmin yapılmamışsa önce 'Hızlı Tahmin' butonuna tıklayın.</div>
+    </div>
+  </div>
+
+  <section id="chat-section">
+  <h2 id="chat">Chatbot: Taşınmaz Bilgi Sorgula</h2>
+  <div id="chat">
+    <input type="text" id="chatInput" placeholder="Taşınmaz ID girin..." />
+    <button onclick="sorgula()">Sorgula</button>
+    <div id="chatlog"></div>
+  </div>
+  </section>
+
+  <section id="tools">
+  <!-- Araçlar bölümü burada yer alacak (önceden eklenen araç kartları) -->
+  </section>
+
+  <section id="surdurulebilirlik">
+  <!-- Sürdürülebilirlik bölümü (önceden eklenen) -->
+  </section>
+
+  <!-- Leaflet Harita Kütüphanesi -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster-src.js"></script>
+  <!-- Chart.js Grafik Kütüphanesi -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // --- Auth helpers ---
+    function saveToken(t){ localStorage.setItem('token', t); }
+    function getToken(){ return localStorage.getItem('token'); }
+    function authFetch(url, opts={}){
+      opts.headers = opts.headers || {};
+      const token = getToken(); if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+      return fetch(url, opts);
+    }
+
+    function renderAuthUI(){
+      const el = document.getElementById('authUI');
+      const token = getToken();
+      if (token) {
+        el.innerHTML = `<button id='logoutBtn'>Çıkış</button>`;
+        document.getElementById('logoutBtn').onclick = ()=>{ localStorage.removeItem('token'); renderAuthUI(); };
+      } else {
+        el.innerHTML = `<input id='loginUser' placeholder='kullanıcı' style='padding:6px;'> <input id='loginPass' type='password' placeholder='şifre' style='padding:6px;'> <button id='loginBtn'>Giriş</button> <button id='regBtn'>Kayıt</button>`;
+        document.getElementById('loginBtn').onclick = ()=>{
+          const u = document.getElementById('loginUser').value; const p = document.getElementById('loginPass').value;
+          fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})}).then(r=>r.json()).then(d=>{ if(d.token){ saveToken(d.token); renderAuthUI(); showTool('Giriş başarılı'); } else showTool('Giriş başarısız', true); }).catch(()=>showTool('Giriş hatası', true));
+        };
+        document.getElementById('regBtn').onclick = ()=>{
+          const u = document.getElementById('loginUser').value; const p = document.getElementById('loginPass').value;
+          fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})}).then(r=>r.json()).then(d=>{ if(d.token){ saveToken(d.token); renderAuthUI(); showTool('Kayıt başarılı'); } else showTool('Kayıt başarısız', true); }).catch(()=>showTool('Kayıt hatası', true));
+        };
+      }
+    }
+    renderAuthUI();
+
+    // Taşınmazları listele
+    // Leaflet harita başlat
+  var map = L.map('map').setView([39.92, 32.85], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+  var markers = [];
+  var markerClusterGroup = L.markerClusterGroup();
+  var heatPoints = [];
+  var heatLayer = L.heatLayer([], { radius: 25, blur: 15 });
+  markerClusterGroup.addTo(map);
+  heatLayer.addTo(map);
+  var tasinmazData = [];
+
+    var fiyatChart;
+    function tasinmazlariYenile() {
+      // build query params from filter controls
+      const q = document.getElementById('searchQ')?.value?.trim();
+      const tur = document.getElementById('filterTur')?.value;
+      const min = document.getElementById('minVal')?.value;
+      const max = document.getElementById('maxVal')?.value;
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (tur) params.set('tur', tur);
+      if (min) params.set('min', min);
+      if (max) params.set('max', max);
+      fetch('/tasinmazlar' + (params.toString() ? ('?' + params.toString()) : ''))
+        .then(res => res.json())
+        .then(data => {
+          tasinmazData = data || [];
+          const div = document.getElementById('tasinmazlar');
+          div.innerHTML = '';
+          // Harita markerlarını temizle
+          markers.forEach(m => map.removeLayer(m.marker || m));
+          markers = [];
+          if (!data || data.length === 0) div.innerHTML = 'Kayıt yok.';
+          // Grafik için veri hazırlama
+          let turler = {};
+          data.forEach(t => {
+            // Basit ikon seçimi
+            let icon = t.tur === 'Konut' ? '🏠' : t.tur === 'Arsa' ? '🌳' : '🏢';
+            // Avatar için rastgele resim
+            let avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(t.ad)}`;
+            div.innerHTML += `<div class='tasinmaz' data-id='${t.id}'><img class='avatar' src='${avatarUrl}' alt='avatar'><span class='icon'>${icon}</span><b>${t.ad}</b><br><span style='color:#2193b0'>${t.konum}</span><br>Tür: ${t.tur}<br>Değer: <b>${t.deger} TL</b><div style="margin-top:12px;display:flex;gap:8px;"><button onclick="openPdf(${t.id})">PDF</button><button onclick="focusOnMarker(${t.id})">Haritada Göster</button><button onclick="openDetailModalById(${t.id})">Detay</button></div></div>`;
+            // Konumdan marker ekle (örn: "39.92,32.85")
+            if (t.konum && /^\s*-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?\s*$/.test(t.konum)) {
+              let [lat, lng] = t.konum.split(',').map(Number);
+              let marker = L.marker([lat, lng]);
+              marker.bindPopup(`<b>${t.ad}</b><br>${t.tur}<br>${t.deger} TL`);
+              markerClusterGroup.addLayer(marker);
+              markers.push({ id: t.id, marker });
+              heatPoints.push([lat, lng, Math.max(0, Math.log(t.deger||1))]);
+            }
+            // Tür bazında değerleri topla
+            
+            // (Karanlık mod toggle kaldırıldı buradan; global handler sayfa sonunda tanımlanıyor)
+            if (!turler[t.tur]) turler[t.tur] = [];
+            turler[t.tur].push(Number(t.deger));
+          });
+          // Grafik verisi
+          let labels = Object.keys(turler);
+          let toplamlar = labels.map(tur => turler[tur].reduce((a,b) => a+b,0));
+          let ortalamalar = labels.map(tur => Math.round(turler[tur].reduce((a,b) => a+b,0)/turler[tur].length));
+          // Chart.js ile grafik çiz
+          if (fiyatChart) fiyatChart.destroy();
+          fiyatChart = new Chart(document.getElementById('fiyatChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: 'Toplam Değer (TL)',
+                  data: toplamlar,
+                  backgroundColor: ['#6dd5ed','#2193b0','#e0eafc'],
+                },
+                {
+                  label: 'Ortalama Değer (TL)',
+                  data: ortalamalar,
+                  backgroundColor: ['#f9ca24','#f0932b','#eb4d4b'],
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { position: 'top' } }
+            }
+          });
+          // heat layer update
+          heatLayer.setLatLngs(heatPoints);
+
+          // İstatistikler
+          let toplamTasinmaz = data.length;
+          let toplamDeger = toplamlar.reduce((a,b) => a+b,0);
+          let ortalamaDeger = toplamTasinmaz ? Math.round(toplamDeger/toplamTasinmaz) : 0;
+          document.getElementById('istatistikler').innerHTML =
+            `<b>Toplam Taşınmaz:</b> ${toplamTasinmaz}<br>`+
+            `<b>Toplam Değer:</b> ${toplamDeger} TL<br>`+
+            `<b>Ortalama Değer:</b> ${ortalamaDeger} TL`;
+        });
+    }
+    tasinmazlariYenile();
+
+    // Taşınmaz ekleme formu
+    document.getElementById('ekleForm').onsubmit = function(e) {
+      e.preventDefault();
+      const ad = document.getElementById('ad').value.trim();
+      const konum = document.getElementById('konum').value.trim();
+      const tur = document.getElementById('tur').value;
+      const deger = document.getElementById('deger').value;
+      authFetch('/tasinmazlar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ad, konum, tur, deger })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const sonuc = document.getElementById('ekleSonuc');
+        if (data.hata) {
+          sonuc.textContent = 'Hata: ' + data.hata;
+          sonuc.style.color = '#e74c3c';
+        } else {
+          sonuc.textContent = 'Başarıyla eklendi!';
+          sonuc.style.color = '#27ae60';
+          tasinmazlariYenile();
+          document.getElementById('ekleForm').reset();
+        }
+      })
+      .catch(() => {
+        document.getElementById('ekleSonuc').textContent = 'Sunucu hatası.';
+        document.getElementById('ekleSonuc').style.color = '#e74c3c';
+      });
+    };
+
+    // Chatbot fonksiyonu
+    function sorgula() {
+      const id = document.getElementById('chatInput').value;
+      if (!id) return;
+      let log = document.getElementById('chatlog');
+      // Kullanıcı mesajı
+  log.innerHTML += `<span class='msg user'><span class='balon'>Taşınmaz ID: ${id}</span><img class='avatar' src='https://api.dicebear.com/7.x/identicon/svg?seed=user' alt='user'></span>`;
+      fetch(`/tasinmazlar/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.hata) {
+            log.innerHTML += `<span class='msg bot'><img class='avatar' src='https://api.dicebear.com/7.x/identicon/svg?seed=bot' alt='bot'><span class='balon'>${data.hata}</span></span>`;
+          } else {
+            log.innerHTML += `<span class='msg bot'><img class='avatar' src='https://api.dicebear.com/7.x/identicon/svg?seed=bot' alt='bot'><span class='balon'>${data.ad} (${data.konum})<br>Değer: <b>${data.deger} TL</b></span></span>`;
+          }
+          log.scrollTop = log.scrollHeight;
+        });
+    }
+  </script>
+  <script>
+    // Menü davranışı: toggle ve smooth scroll
+    const nav = document.getElementById('mainNav');
+    const toggle = document.getElementById('navToggle');
+    toggle.addEventListener('click', ()=> nav.classList.toggle('open'));
+
+    // Smooth scroll for internal links
+    document.querySelectorAll('.topnav a').forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+        // close nav on mobile
+        nav.classList.remove('open');
+      });
+    });
+
+    // Active link highlight on scroll
+    const sections = Array.from(document.querySelectorAll('main section, header'));
+    window.addEventListener('scroll', ()=>{
+      const y = window.scrollY + 120;
+      document.querySelectorAll('.topnav nav a').forEach(link=> link.classList.remove('active'));
+      for (let s of sections) {
+        if (s.offsetTop <= y && s.offsetTop + s.offsetHeight > y) {
+          const id = s.querySelector('[id]') ? s.querySelector('[id]').id : s.id;
+          const active = document.querySelector(`.topnav nav a[href="#${id}"]`);
+          if (active) active.classList.add('active');
+        }
+      }
+    });
+  </script>
+        <script>
+          // Araç butonları
+          function showTool(msg, isError) {
+            const el = document.getElementById('toolSonuc');
+            el.style.color = isError ? '#e74c3c' : '#2d3a4b';
+            el.innerHTML = msg;
+          }
+
+          document.getElementById('enerjiRaporBtn').onclick = function() {
+            const tuketim = Number(document.getElementById('enerjiTuketim').value) || 0;
+            const birim = document.getElementById('enerjiBirim').value;
+            fetch('/enerji-raporu', {
+              method: 'POST', headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({ enerji: { tuketim, birim } })
+            }).then(r=>r.json()).then(data=>{
+              showTool(`Enerji: ${data.tuketim} ${data.birim} — Verimlilik: ${data.verimlilik} — Sürdürülebilirlik: ${data.surdurulebilirlik} — Yorum: ${data.yorum}`);
+            }).catch(()=>showTool('Enerji raporu alınamadı.', true));
+          };
+
+          document.getElementById('tahminBtn').onclick = function() {
+            const ad = document.getElementById('ad').value;
+            const konum = document.getElementById('konum').value;
+            const tur = document.getElementById('tur').value;
+            const deger = Number(document.getElementById('deger').value) || 0;
+            const tuketim = Number(document.getElementById('enerjiTuketim').value) || 0;
+            fetch('/tahmin', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ad, konum, tur, deger, enerji:{ tuketim } }) })
+              .then(r=>r.json()).then(data=> showTool(`Tahmini Değer: ${data.tahmini_deger} TL`))
+              .catch(()=>showTool('Tahmin alınamadı.', true));
+          };
+
+          document.getElementById('fiyatOneriBtn').onclick = function() {
+            const konum = document.getElementById('konum').value;
+            const deger = Number(document.getElementById('deger').value) || 0;
+            fetch('/fiyat-onerisi', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ konum, deger }) })
+              .then(r=>r.json()).then(data=> showTool(`Önerilen Fiyat: ${data.onerilen_fiyat} TL`))
+              .catch(()=>showTool('Fiyat önerisi alınamadı.', true));
+          };
+
+          document.getElementById('yasalBtn').onclick = function() {
+            fetch('/yasal-bilgi').then(r=>r.json()).then(data=>{
+              showTool(`<b>İmar:</b> ${data.imar_kanunu}<br><b>Tapu:</b> ${data.tapu_kanunu}<br><b>Belediye:</b> ${data.belediyeler_kanunu}`);
+            }).catch(()=>showTool('Yasal bilgi alınamadı.', true));
+          };
+
+          document.getElementById('csvBtn').onclick = function() {
+            fetch('/tasinmazlar').then(r=>r.json()).then(rows=>{
+              if(!rows || rows.length===0) return showTool('İndirmek için kayıt yok.', true);
+              const keys = Object.keys(rows[0]);
+              const csv = [keys.join(',')].concat(rows.map(r=>keys.map(k=>`"${String(r[k]).replace(/"/g,'""')}"`).join(','))).join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a'); a.href = url; a.download = 'tasinmazlar.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+              showTool('CSV indirildi.');
+            }).catch(()=>showTool('CSV oluşturulamadı.', true));
+          };
+        </script>
+        <script>
+          // Sürdürülebilirlik grafiği ve senaryo
+          var surdurulebilirChart = new Chart(document.getElementById('surdurulebilirChart').getContext('2d'), {
+            type: 'doughnut',
+            data: { labels: ['Verimlilik','Diğer'], datasets: [{ data: [50,50], backgroundColor: ['#27ae60','#e0eafc'] }] },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+          });
+
+          var lastTahmin = null;
+          document.getElementById('scenarioSlider').oninput = function() {
+            document.getElementById('scenarioValue').textContent = this.value;
+            if (lastTahmin) {
+              let bonus = 1 + (Number(this.value)/100);
+              let scenVal = Math.round(lastTahmin * bonus);
+              document.getElementById('scenarioResult').innerHTML = `<b>Senaryo Değeri:</b> ${scenVal} TL (bonus x${bonus.toFixed(2)})`;
+            }
+          };
+
+          // Enerji raporu sonucunu grafiğe bağla
+          // Bu fonksiyonu enerji rapor sonucunda çağıracağız
+          function updateSustainability(data) {
+            let v = data.verimlilik || 50;
+            surdurulebilirChart.data.datasets[0].data = [v, 100-v];
+            surdurulebilirChart.update();
+          }
+
+          // Tahmin endpoint sonucu ile senaryoyu güncelle
+          // Override tahmin butonunun then() kısmında lastTahmin ayarlanacak
+          // Bu küçük helper ile entegre ediyoruz
+          (function overrideTahmin() {
+            const orig = document.getElementById('tahminBtn').onclick;
+            document.getElementById('tahminBtn').onclick = function() {
+              const ad = document.getElementById('ad').value;
+              const konum = document.getElementById('konum').value;
+              const tur = document.getElementById('tur').value;
+              const deger = Number(document.getElementById('deger').value) || 0;
+              const tuketim = Number(document.getElementById('enerjiTuketim').value) || 0;
+              fetch('/tahmin', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ad, konum, tur, deger, enerji:{ tuketim } }) })
+                .then(r=>r.json()).then(data=>{
+                  showTool(`Tahmini Değer: ${data.tahmini_deger} TL`);
+                  lastTahmin = data.tahmini_deger;
+                  document.getElementById('scenarioResult').innerHTML = `<b>Base Tahmin:</b> ${lastTahmin} TL`;
+                  // otomatik senaryo güncelle
+                  document.getElementById('scenarioSlider').dispatchEvent(new Event('input'));
+                })
+                .catch(()=>showTool('Tahmin alınamadı.', true));
+            };
+          })();
+
+          // Enerji raporu butonuna update hook
+          (function overrideEnerji() {
+            const orig = document.getElementById('enerjiRaporBtn').onclick;
+            document.getElementById('enerjiRaporBtn').onclick = function() {
+              const tuketim = Number(document.getElementById('enerjiTuketim').value) || 0;
+              const birim = document.getElementById('enerjiBirim').value;
+              fetch('/enerji-raporu', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ enerji: { tuketim, birim } })
+              }).then(r=>r.json()).then(data=>{
+                showTool(`Enerji: ${data.tuketim} ${data.birim} — Verimlilik: ${data.verimlilik} — Sürdürülebilirlik: ${data.surdurulebilirlik} — Yorum: ${data.yorum}`);
+                updateSustainability(data);
+              }).catch(()=>showTool('Enerji raporu alınamadı.', true));
+            };
+          })();
+
+          // Haritada göster ve PDF açık fonksiyonları
+          function focusOnMarker(id) {
+            const item = markers.find(m => m.id === id);
+            if (!item) return showTool('Bu taşınmaz için konum yok.', true);
+            map.setView(item.marker.getLatLng(), 14, { animate: true });
+            item.marker.openPopup();
+          }
+
+          function openPdf(id) {
+            // tarayıcıda yeni sekme olarak PDF endpointini açar
+            window.open(`/rapor/pdf/${id}`, '_blank');
+          }
+
+          // Modal helpers
+          function ensureModal() {
+            if (document.getElementById('detailModal')) return;
+            const modal = document.createElement('div');
+            modal.id = 'detailModal';
+            modal.style = 'position:fixed;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);z-index:9999;';
+            modal.innerHTML = `
+              <div style="background:var(--card, #fff);color:var(--text, #333);padding:20px;border-radius:12px;max-width:800px;width:95%;box-shadow:0 8px 30px rgba(0,0,0,0.4);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <h3 id="modalTitle">Detay</h3>
+                  <button id="modalClose">Kapat</button>
+                </div>
+                <div id="modalBody" style="max-height:60vh;overflow:auto;"></div>
+                <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+                  <button id="modalPdf">PDF İndir</button>
+                  <button id="modalFocus">Haritada Göster</button>
+                </div>
+              </div>`;
+            document.body.appendChild(modal);
+            document.getElementById('modalClose').onclick = () => modal.remove();
+          }
+
+          function openDetailModal(item) {
+            ensureModal();
+            const modal = document.getElementById('detailModal');
+            const title = modal.querySelector('#modalTitle');
+            const body = modal.querySelector('#modalBody');
+            const pdfBtn = modal.querySelector('#modalPdf');
+            const focusBtn = modal.querySelector('#modalFocus');
+            title.textContent = item.ad || ('#'+item.id+' - Detay');
+            body.innerHTML = `
+              <p><strong>Tür:</strong> ${item.tur}</p>
+              <p><strong>Değer:</strong> ${item.deger} TL</p>
+              <p><strong>Konum:</strong> ${item.konum || '—'}</p>
+              <p><strong>Açıklama:</strong><br>${item.aciklama || 'Kayıt yok'}</p>
+              <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+                ${(item.photos && item.photos.length) ? item.photos.map(p=>`<img src='${p}' style='width:80px;height:60px;object-fit:cover;border-radius:8px;border:2px solid #fff;'>`).join('') : '<em>Fotoğraf yok</em>'}
+              </div>
+              <hr>
+              <form id='uploadForm' enctype='multipart/form-data' style='margin-top:8px;'>
+                <input type='file' id='uploadFiles' name='foto' multiple accept='image/*' />
+                <button type='button' id='uploadBtn'>Yükle</button>
+              </form>
+              <pre style="white-space:pre-wrap;">${JSON.stringify(item, null, 2)}</pre>
+            `;
+            pdfBtn.onclick = () => openPdf(item.id);
+            focusBtn.onclick = () => { focusOnMarker(item.id); };
+            // upload handler
+            const upBtn = modal.querySelector('#uploadBtn');
+            upBtn.onclick = function(){
+              const input = modal.querySelector('#uploadFiles');
+              if (!input || !input.files || input.files.length===0) return showTool('Yüklenecek dosya seçin.', true);
+              const fd = new FormData();
+              for (let i=0;i<input.files.length;i++) fd.append('foto', input.files[i]);
+              authFetch(`/tasinmazlar/${item.id}/foto`, { method:'POST', body: fd })
+                .then(r=>r.json()).then(d=>{
+                  if (d.hata) showTool('Yükleme hatası.', true);
+                  else { showTool('Fotoğraflar yüklendi.'); tasinmazlariYenile(); modal.remove(); }
+                }).catch(()=>showTool('Yükleme başarısız.', true));
+            };
+          }
+
+          function openDetailModalById(id) {
+            const item = tasinmazData.find(x => x.id === id);
+            if (item) openDetailModal(item);
+            else {
+              // fetch single
+              fetch(`/tasinmazlar/${id}`).then(r=>r.json()).then(d=>{ if (!d.hata) openDetailModal(d); else showTool('Detay bulunamadı', true); }).catch(()=>showTool('Detay alınamadı', true));
+            }
+          }
+
+          // Filtre butonu
+          document.getElementById('applyFilter').addEventListener('click', function(){ tasinmazlariYenile(); });
+        </script>
+        <script>
+          // Global karanlık mod handler
+          const darkBtn = document.getElementById('darkToggle');
+        function updateDarkText() { darkBtn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙'; }
+          darkBtn.addEventListener('click', ()=>{
+            document.body.classList.toggle('dark');
+            updateDarkText();
+            try { if (fiyatChart) fiyatChart.update(); if (surdurulebilirChart) surdurulebilirChart.update(); } catch(e){}
+          });
+          updateDarkText();
+
+                  // SSE: real-time updates
+                  if (!!window.EventSource) {
+                    const ev = new EventSource('/events');
+                    ev.onmessage = function(e){
+                      try {
+                        const data = JSON.parse(e.data);
+                        if (data.type === 'tasinmaz_created' || data.type === 'tasinmaz_photos_updated') {
+                          tasinmazlariYenile();
+                        }
+                      } catch(err){}
+                    };
+                  }
+        </script>
+</body>
+</html>

@@ -1,29 +1,22 @@
-# Yapay Zekâ Destekli Akıllı Şehirlerde Taşınmaz Envanteri ve Emlak Yönetimi
+# Node.js ile Akıllı Şehir Taşınmaz Mal Yönetimi API
 
-## 📌 NEDİR?
-Bu proje, **akıllı şehirler** bağlamında taşınmaz envanteri ve emlak yönetimini yapay zekâ desteğiyle optimize etmeyi amaçlamaktadır.  
-Taşınmazların doğru, güncel ve erişilebilir bir şekilde envantere işlenmesi; şehir planlaması, emlak piyasası ve kamu yönetimi açısından kritik öneme sahiptir.  
+Bu proje, Node.js ve Express kullanarak taşınmazların listesini döndüren basit bir web API örneğidir. Kodlar açıklamalı ve yeni başlayanlar için uygundur.
 
-## 🎯 AMAÇ
-- Yapay zekâ algoritmaları kullanarak taşınmaz verilerinin sınıflandırılması ve analiz edilmesi  
-- Akıllı şehir planlamasında kullanılabilecek karar destek mekanizmaları geliştirmek  
-- Kamusal ve özel sektör için şeffaf, güvenilir ve hızlı erişilebilen bir taşınmaz yönetim platformu sunmak  
+## Nasıl Çalıştırılır?
 
-## ✨ ÖZELLİKLER
-- 📊 Taşınmaz envanteri oluşturma ve güncelleme  
-- 🤖 Yapay zekâ ile sınıflandırma ve değerleme  
-- 🏙️ Akıllı şehir senaryoları için veri görselleştirme  
-- 🔍 Emlak piyasası öngörüleri ve trend analizi  
-- 📡 Farklı veri kaynaklarından entegrasyon (CBS, tapu kayıtları, piyasa verileri vb.)  
+1. Node.js kurulu olmalı.
+2. Terminalde proje klasörüne girin.
+3. `npm install` ile bağımlılıkları yükleyin (ilk kurulumda zaten yüklendi).
+4. `node index.js` komutunu çalıştırın.
+5. Tarayıcıda veya Postman ile `http://localhost:3000/tasinmazlar` adresine gidin.
 
-## 🛠️ KULLANILAN TEKNOLOJİLER
-- **Backend:** Laravel / .NET Core / Node.js (proje gereksinimlerine göre)  
-- **Frontend:** Vue.js / React  
-- **Veritabanı:** PostgreSQL + PostGIS  
-- **Yapay Zekâ:** Python (Scikit-learn, TensorFlow, PyTorch)  
-- **Diğer:** Docker, API entegrasyonları  
+## Endpoint
+- `/tasinmazlar`: Tüm taşınmazları JSON olarak döndürür.
 
-## 🚀 KURULUM
-1. Repoyu klonla:  
-   ```bash
-   git clone https://github.com/kullaniciadi/akilli-sehir-tasinmaz.git
+## Kod Açıklaması
+- `index.js` dosyasında örnek taşınmaz verisi ve basit bir API endpointi bulunmaktadır.
+
+## Sonraki Adımlar
+- Yeni endpointler ekleyebilir, veri tabanı bağlantısı kurabilir veya yapay zeka entegrasyonu yapabilirsiniz.
+
+Her adımda sana rehberlik edebilirim. Başka bir özellik eklemek istersen belirtmen yeterli!
